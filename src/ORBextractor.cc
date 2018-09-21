@@ -62,6 +62,8 @@
 
 #include "ORBextractor.h"
 
+#include <iostream>
+
 
 using namespace cv;
 using namespace std;
@@ -662,7 +664,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
                 lit=lNodes.erase(lit);
                 continue;
             }
-        }       
+        }   
 
         // Finish if there are more nodes than required features
         // or all nodes contain just one point

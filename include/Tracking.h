@@ -74,6 +74,8 @@ public:
     // Use this function if you have deactivated local mapping and you only want to localize the camera.
     void InformOnlyTracking(const bool &flag);
 
+    cv::Vec3f RotationMatrixToEuler(cv::Mat &R);
+
 
 public:
 
@@ -95,6 +97,10 @@ public:
     // Current Frame
     Frame mCurrentFrame;
     cv::Mat mImGray;
+
+    //YunTai
+    std::vector<int> mvMapPointHist;
+    std::vector< pair<float, float> > mvMapPointProject;
 
     // Initialization Variables (Monocular)
     std::vector<int> mvIniLastMatches;
@@ -143,6 +149,11 @@ protected:
 
     bool NeedNewKeyFrame();
     void CreateNewKeyFrame();
+
+    //Get rotation matrix between YunTai and Camera
+    void GetYunTaiPose(const cv::Mat &Tcw, cv::Mat &Tyw);
+
+    int GetMapPointsInView(const float theta, const set< pair<float, float> > &sMapPointProject);
 
     // In case of performing only localization, this flag is true when there are no matches to
     // points in the map. Still tracking will continue if there are enough matches with temporal points.
@@ -209,6 +220,13 @@ protected:
 
     //Motion Model
     cv::Mat mVelocity;
+
+    //YunTai
+    cv::Mat mTyw;       //rotation matrix between YunTai and world
+    float mTheta = 0;       //the rotation(rad) between YunTai and Camera in y axis
+    float mThetaStep = 0.05;
+    float mWindowWidth = 0.84;
+    float mWindowHeight = 0.61;
 
     //Color order (true RGB, false BGR, ignored if grayscale)
     bool mbRGB;

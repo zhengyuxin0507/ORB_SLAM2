@@ -85,6 +85,7 @@ void Viewer::Run()
             .SetHandler(new pangolin::Handler3D(s_cam));
 
     pangolin::OpenGlMatrix Twc;
+    pangolin::OpenGlMatrix Twy;   //pangolin pose between world and YunTai
     Twc.SetIdentity();
 
     cv::namedWindow("ORB-SLAM2: Current Frame");
@@ -97,6 +98,7 @@ void Viewer::Run()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         mpMapDrawer->GetCurrentOpenGLCameraMatrix(Twc);
+        mpMapDrawer->GetCurrentOpenGLYunTaiMatrix(Twy);
 
         if(menuFollowCamera && bFollow)
         {
@@ -127,6 +129,7 @@ void Viewer::Run()
         d_cam.Activate(s_cam);
         glClearColor(1.0f,1.0f,1.0f,1.0f);
         mpMapDrawer->DrawCurrentCamera(Twc);
+        mpMapDrawer->DrawCurrentYunTai(Twy);    //Draw YunTai
         if(menuShowKeyFrames || menuShowGraph)
             mpMapDrawer->DrawKeyFrames(menuShowKeyFrames,menuShowGraph);
         if(menuShowPoints)
@@ -136,6 +139,7 @@ void Viewer::Run()
 
         cv::Mat im = mpFrameDrawer->DrawFrame();
         cv::imshow("ORB-SLAM2: Current Frame",im);
+        cv::imshow("test", mpFrameDrawer->mTestMat);
         cv::waitKey(mT);
 
         if(menuReset)

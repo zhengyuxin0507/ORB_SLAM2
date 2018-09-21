@@ -21,6 +21,8 @@
 
 #include "Tracking.h"
 
+#include "tic_toc.h"
+
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
 
@@ -229,7 +231,14 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
 
     mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
 
+    //zyx
+    //mCurrentFrame.mvCurrKeyPt = mCurrentFrame.mvKeys;
+
+    TicToc tTrack;
+
     Track();
+
+    cout << "Track time consume: " << tTrack.toc() << endl;
 
     return mCurrentFrame.mTcw.clone();
 }
@@ -394,11 +403,15 @@ void Tracking::Track()
 
         mCurrentFrame.mpReferenceKF = mpReferenceKF;
 
+        TicToc tLocalBA;
+
         // If we have an initial estimation of the camera pose and matching. Track the local map.
         if(!mbOnlyTracking)
         {
             if(bOK)
+            {
                 bOK = TrackLocalMap();
+            }
         }
         else
         {
@@ -408,6 +421,8 @@ void Tracking::Track()
             if(bOK && !mbVO)
                 bOK = TrackLocalMap();
         }
+
+        cout << "local BA time consume: " << tLocalBA.toc() << endl;
 
         if(bOK)
             mState = OK;
@@ -430,6 +445,9 @@ void Tracking::Track()
             }
             else
                 mVelocity = cv::Mat();
+
+            GetYunTaiPose(mCurrentFrame.mTcw, mTyw);
+            mpMapDrawer->SetCurrenYunTaiPose(mTyw);
 
             mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
 
@@ -1587,6 +1605,304 @@ void Tracking::InformOnlyTracking(const bool &flag)
     mbOnlyTracking = flag;
 }
 
+cv::Vec3f Tracking::RotationMatrixToEuler(cv::Mat &R)
+{
+    float sy = sqrt(R.at<float>(0,0) * R.at<float>(0, 0) + R.at<float>(1, 0) * R.at<float>(1, 0));
+    bool singular = sy < 1e-6;
 
+    float x, y, z;
+    if(!singular)
+    {
+        x = atan2(R.at<float>(2, 1), R.at<float>(2, 2));
+        y = atan2(-R.at<float>(2, 0), sy);
+        z = atan2(R.at<float>(1, 0), R.at<float>(0, 0));
+    }
+    else
+    {
+        x = atan2(R.at<float>(1, 2), R.at<float>(1, 1));
+        y = atan2(R.at<float>(2, 0), sy);
+        z = 0;
+    }
+    return cv::Vec3f(x, y, z);
+}
+
+/*void Tracking::GetYunTaiPose(const cv::Mat &Tcw, cv::Mat &Tyw)
+{
+    TicToc t_m;
+
+    const cv::Mat Rcw = Tcw.rowRange(0,3).colRange(0,3);
+    const cv::Mat tcw = Tcw.rowRange(0,3).col(3);
+
+    mvMapPointHist.clear();
+    mvMapPointHist.resize(315, 0);
+
+    vector<MapPoint*> vMapPoints = mpMap->GetAllMapPoints();
+    for(size_t i = 0; i < vMapPoints.size(); i++)
+    {
+        MapPoint* pMP = vMapPoints[i];
+        if(pMP && !pMP->isBad())
+        {
+            cv::Mat x3Dw = pMP->GetWorldPos();
+            cv::Mat x3Dc = Rcw*x3Dw+tcw;
+
+            const float xc = x3Dc.at<float>(0);
+            const float zc = x3Dc.at<float>(2);
+
+            float theta = atan2(zc, xc);
+            int idx = round((theta + M_PI) * 50);
+            mvMapPointHist[idx]++;
+
+            /*const float xc = x3Dc.at<float>(0);
+            const float yc = x3Dc.at<float>(1);
+            const float invzc = 1.0/x3Dc.at<float>(2);
+
+            if(invzc<0)
+                continue;
+
+            float u = mCurrentFrame.fx*xc*invzc+mCurrentFrame.cx;
+            float v = mCurrentFrame.fy*yc*invzc+mCurrentFrame.cy;
+
+            if(u<mCurrentFrame.mnMinX || u>mCurrentFrame.mnMaxX)
+                continue;
+            if(v<mCurrentFrame.mnMinY || v>mCurrentFrame.mnMaxY)
+                continue;*/
+
+/*        }
+    }
+
+    int best_idx = 157;
+    int max_nMP = 0;
+    for(size_t i = 0; i < mvMapPointHist.size(); i++)
+    {
+        int iend = i + 20;
+        if(iend > mvMapPointHist.size())
+            iend = mvMapPointHist.size();
+
+        int sum = 0;
+        for(int j = i; j < iend; j++)
+        {
+            sum += mvMapPointHist[j];
+        }
+
+        if(sum > max_nMP)
+        {
+            best_idx = (i + iend)/2;
+            max_nMP = sum;
+        }
+    }
+
+    float angle = static_cast<float>(best_idx) / 315 * 2 * M_PI - M_PI;
+
+    cout << "Best YunTai angle: " << angle / M_PI * 180 << endl;
+
+    cv::Mat Tyc = cv::Mat::zeros(4,4,CV_32F);
+
+    Tyc.at<float>(0,0) = cos(angle);    Tyc.at<float>(0,2) = sin(angle);
+    Tyc.at<float>(1,1) = 1;
+    Tyc.at<float>(2,0) = -sin(angle);   Tyc.at<float>(2,2) = cos(angle);
+    Tyc.at<float>(3,3) = 1;
+    Tyw = Tyc * Tcw;
+
+    cout << "YunTai time consuming: " << t_m.toc() << endl;
+}*/
+
+void Tracking::GetYunTaiPose(const cv::Mat &Tcw, cv::Mat &Tyw)
+{
+    TicToc t_m;
+
+    const cv::Mat Rcw = Tcw.rowRange(0,3).colRange(0,3);
+    const cv::Mat tcw = Tcw.rowRange(0,3).col(3);
+
+    mvMapPointProject.clear();
+
+    vector<MapPoint*> vMapPoints = mpMap->GetAllMapPoints();
+    for(size_t i = 0; i < vMapPoints.size(); i++)
+    {
+        MapPoint* pMP = vMapPoints[i];
+        if(pMP && !pMP->isBad())
+        {
+            cv::Mat x3Dw = pMP->GetWorldPos();
+            cv::Mat x3Dc = Rcw*x3Dw+tcw;
+
+            const float xc = x3Dc.at<float>(0);
+            const float yc = x3Dc.at<float>(1);
+            const float zc = x3Dc.at<float>(2);
+
+            if(fabs(zc) > 5)
+                continue;
+
+            //float theta = atan2(zc, xc);
+            float theta = atan2(xc, zc);
+            float gama = atan(-yc/sqrt(zc*zc+xc*xc));
+            
+            mvMapPointProject.push_back(make_pair(theta, gama));
+        }
+    }
+
+    set< pair<float, float> > sMapPointProject;
+    for(size_t i = 0; i < mvMapPointProject.size(); i++)
+    {
+        sMapPointProject.insert(make_pair(mvMapPointProject[i].first, mvMapPointProject[i].second));
+    }
+
+    //Search right
+    float CurrentThetaRight = 0;
+    int CurrentMPRight = GetMapPointsInView(CurrentThetaRight, sMapPointProject);
+    float NextThetaRight = CurrentThetaRight + mThetaStep;
+    if(NextThetaRight > M_PI)
+        NextThetaRight -= 2*M_PI;
+    int NextMPRight;
+    int i = 0;
+    while(1)
+    {
+        i++;
+        NextMPRight = GetMapPointsInView(NextThetaRight, sMapPointProject);
+        if(NextMPRight >= CurrentMPRight)
+        {
+            CurrentThetaRight = NextThetaRight;
+            CurrentMPRight = NextMPRight;
+            NextThetaRight = CurrentThetaRight + mThetaStep;
+            if(NextThetaRight > M_PI)
+                NextThetaRight -= 2*M_PI;
+            cout << "NextMPRight: " << NextMPRight << endl;
+        }
+        else
+        {
+            break;
+        }
+    }
+    cout << "right: " << CurrentThetaRight << " " << CurrentMPRight << " " << i << endl;
+
+    //Search left
+    float CurrentThetaLeft = 0;
+    int CurrentMPLeft = GetMapPointsInView(CurrentThetaLeft, sMapPointProject);
+    float NextThetaLeft = CurrentThetaLeft - mThetaStep;
+    if(NextThetaRight < -M_PI)
+        NextThetaRight += 2*M_PI;
+    int NextMPLeft;
+    i = 0;
+    while(1)
+    {
+        i++;
+        NextMPLeft = GetMapPointsInView(NextThetaLeft, sMapPointProject);
+        if(NextMPLeft >= CurrentMPLeft)
+        {
+            CurrentThetaLeft = NextThetaLeft;
+            CurrentMPLeft = NextMPLeft;
+            NextThetaLeft = CurrentThetaLeft - mThetaStep;
+            if(NextThetaRight < -M_PI)
+                NextThetaRight += 2*M_PI;
+        }
+        else
+        {
+            break;
+        }
+    }
+    cout << "left: " << CurrentThetaLeft << " " << CurrentMPLeft << " " << i << endl;
+
+    if(CurrentMPLeft > CurrentMPRight)
+        mTheta = CurrentThetaLeft;
+    else
+        mTheta = CurrentThetaRight;
+
+    cout << "theta: " << mTheta / M_PI *180 << endl;
+
+    /*int best_idx = 157;
+    int max_nMP = 0;
+    for(size_t i = 0; i < mvMapPointHist.size(); i++)
+    {
+        int iend = i + 20;
+        if(iend > mvMapPointHist.size())
+            iend = mvMapPointHist.size();
+
+        int sum = 0;
+        for(int j = i; j < iend; j++)
+        {
+            sum += mvMapPointHist[j];
+        }
+
+        if(sum > max_nMP)
+        {
+            best_idx = (i + iend)/2;
+            max_nMP = sum;
+        }
+    }
+
+    float angle = static_cast<float>(best_idx) / 315 * 2 * M_PI - M_PI;
+
+    cout << "Best YunTai angle: " << angle / M_PI * 180 << endl;
+
+    cv::Mat Tyc = cv::Mat::zeros(4,4,CV_32F);
+
+    Tyc.at<float>(0,0) = cos(angle);    Tyc.at<float>(0,2) = sin(angle);
+    Tyc.at<float>(1,1) = 1;
+    Tyc.at<float>(2,0) = -sin(angle);   Tyc.at<float>(2,2) = cos(angle);
+    Tyc.at<float>(3,3) = 1;
+    Tyw = Tyc * Tcw;*/
+
+    cv::Mat Tyc = cv::Mat::zeros(4,4,CV_32F);
+    Tyc.at<float>(0,0) = cos(mTheta);    Tyc.at<float>(0,2) = -sin(mTheta);
+    Tyc.at<float>(1,1) = 1;
+    Tyc.at<float>(2,0) = sin(mTheta);   Tyc.at<float>(2,2) = cos(mTheta);
+    Tyc.at<float>(3,3) = 1;
+    Tyw = Tyc * Tcw;
+
+    cout << "YunTai time consuming: " << t_m.toc() << endl;
+}
+
+int Tracking::GetMapPointsInView(const float theta, const set< pair<float, float> > &sMapPointProject)
+{
+    int nMapPointsInView = 0;
+
+    set< pair<float, float> >::iterator it;
+    if( (theta + mWindowWidth/2) > M_PI )   //right bound
+    {
+        for(it = sMapPointProject.lower_bound(make_pair(theta - mWindowWidth/2, -4.0f)); it != sMapPointProject.end(); it++)
+        {
+            if(fabs(it->second) > mWindowHeight/2)
+                continue;
+            
+            nMapPointsInView++;
+        }
+
+        for(it = sMapPointProject.begin(); it != sMapPointProject.lower_bound(make_pair(theta + mWindowWidth/2 - M_PI, -4.0f)); it++)
+        {
+            if(fabs(it->second) > mWindowHeight/2)
+                continue;
+            
+            nMapPointsInView++;
+        }
+    }
+    else if((theta - mWindowWidth/2) < -M_PI)
+    {
+        for(it = sMapPointProject.begin(); it != sMapPointProject.lower_bound(make_pair(theta + mWindowWidth/2, -4.0f)); it++)
+        {
+            if(fabs(it->second) > mWindowHeight/2)
+                continue;
+            
+            nMapPointsInView++;
+        }
+
+        for(it = sMapPointProject.lower_bound(make_pair(theta - mWindowWidth/2 + 2*M_PI, -4.0f)); it != sMapPointProject.end(); it++)
+        {
+            if(fabs(it->second) > mWindowHeight/2)
+                continue;
+            
+            nMapPointsInView++;
+        }
+    }
+    else
+    {
+        for(it = sMapPointProject.lower_bound(make_pair(theta - mWindowWidth/2, -4.0f)); it != sMapPointProject.lower_bound(make_pair(theta + mWindowWidth/2, -4.0f)); it++)
+        {
+            if(fabs(it->second) > mWindowHeight/2)
+                continue;
+            
+            nMapPointsInView++;
+        }
+    }
+
+    return nMapPointsInView;
+}
 
 } //namespace ORB_SLAM

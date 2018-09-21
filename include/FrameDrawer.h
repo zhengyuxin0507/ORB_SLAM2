@@ -48,6 +48,11 @@ public:
     // Draw last processed frame.
     cv::Mat DrawFrame();
 
+    //YunTai
+    cv::Mat mTestMat;
+    std::vector<int> mvMapPointHist;
+    std::vector<pair<float, float>> mvMapPointProject;
+
 protected:
 
     void DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText);
@@ -66,6 +71,9 @@ protected:
     Map* mpMap;
 
     std::mutex mMutex;
+
+    //zyx
+    vector<cv::KeyPoint> mvCurrKeyPt;
 };
 
 } //namespace ORB_SLAM

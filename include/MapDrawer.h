@@ -45,6 +45,10 @@ public:
     void SetReferenceKeyFrame(KeyFrame *pKF);
     void GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M);
 
+    void DrawCurrentYunTai(pangolin::OpenGlMatrix &Twy);
+    void SetCurrenYunTaiPose(const cv::Mat &Tyw);
+    void GetCurrentOpenGLYunTaiMatrix(pangolin::OpenGlMatrix &M);
+
 private:
 
     float mKeyFrameSize;
@@ -55,8 +59,12 @@ private:
     float mCameraLineWidth;
 
     cv::Mat mCameraPose;
+    cv::Mat mYunTaiPose;    //pose between YunTai and Camera
 
     std::mutex mMutexCamera;
+
+    //YunTai pose lock
+    std::mutex mMutexYunTai;
 };
 
 } //namespace ORB_SLAM
