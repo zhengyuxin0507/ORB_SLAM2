@@ -3,6 +3,7 @@
 
 #include "Tracking.h"
 #include "tic_toc.h"
+#include "serial.h"
 
 #include <mutex>
 
@@ -44,29 +45,25 @@ public:
     //rotation matrix between YunTai and world
     cv::Mat mTyw;
 
-    /*bool mbStopRequested;
-    bool mbStopped;
-    bool mbFinishRequested;
-    bool mbFinished;*/
-
 private:
-
-    bool Stop();
-
-    bool isStopped();
-
-    bool stopRequested();
 
     bool CheckFinish();
 
     void SetFinish();
 
-    bool mbStopRequested;
-    bool mbStopped;
+    void TurnLeft(const float v);
+
+    void TurnRight(const float v);
+
+    void Stop();
+
+    void GetYaw(int &yaw);
+
     bool mbFinishRequested;
     bool mbFinished;
 
-    std::mutex mMutexStop;
+    int fd;
+
     std::mutex mMutexFinish;
     std::mutex mMutex;
 };

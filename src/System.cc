@@ -30,7 +30,7 @@ namespace ORB_SLAM2
 {
 
 System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
-               const bool bUseViewer):mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false),mbActivateLocalizationMode(false),
+               const bool bUseViewer):mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mpYunTai(static_cast<YunTai*>(NULL)), mbReset(false),mbActivateLocalizationMode(false),
         mbDeactivateLocalizationMode(false)
 {
     // Output welcome message
@@ -102,13 +102,17 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         mpTracker->SetViewer(mpViewer);
     }
 
-    mpYunTai = new YunTai();
-    mptYunTai = new thread(&ORB_SLAM2::YunTai::Run, mpYunTai);
+    bool bUseYunTai = true;
+    if(bUseYunTai)
+    {
+        mpYunTai = new YunTai();
+        mptYunTai = new thread(&ORB_SLAM2::YunTai::Run, mpYunTai);
+        mpTracker->SetYunTai(mpYunTai);
+    }
 
     //Set pointers between threads
     mpTracker->SetLocalMapper(mpLocalMapper);
     mpTracker->SetLoopClosing(mpLoopCloser);
-    mpTracker->SetYunTai(mpYunTai);
 
     mpLocalMapper->SetTracker(mpTracker);
     mpLocalMapper->SetLoopCloser(mpLoopCloser);
@@ -306,7 +310,6 @@ void System::Shutdown()
 {
     mpLocalMapper->RequestFinish();
     mpLoopCloser->RequestFinish();
-    mpYunTai->RequestFinish();
     if(mpViewer)
     {
         mpViewer->RequestFinish();
@@ -314,9 +317,16 @@ void System::Shutdown()
             usleep(5000);
     }
 
+    if(mpYunTai)
+    {
+        mpYunTai->RequestFinish();
+        while(!mpYunTai->isFinished())
+            usleep(5000);
+    }
+
     // Wait until all thread have effectively stopped
-    while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || !mpYunTai->isFinished() || mpLoopCloser->isRunningGBA())
-    //while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
+    //while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || !mpYunTai->isFinished() || mpLoopCloser->isRunningGBA())
+    while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
     {
         usleep(5000);
     }

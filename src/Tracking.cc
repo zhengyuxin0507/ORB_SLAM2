@@ -46,7 +46,7 @@ namespace ORB_SLAM2
 {
 
 Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Map *pMap, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor):
-    mState(NO_IMAGES_YET), mSensor(sensor), mbOnlyTracking(false), mbVO(false), mpORBVocabulary(pVoc),
+    mState(NO_IMAGES_YET), mSensor(sensor), mbOnlyTracking(false), mbVO(false), mpYunTai(NULL), mpORBVocabulary(pVoc),
     mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys), mpViewer(NULL),
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0)
 {
@@ -243,7 +243,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
 
     Track();
 
-    cout << "Track time consume: " << tTrack.toc() << endl;
+    //cout << "Track time consume: " << tTrack.toc() << endl;
 
     return mCurrentFrame.mTcw.clone();
 }
@@ -1695,7 +1695,7 @@ void Tracking::GetYunTaiPose(const cv::Mat &Tcw, cv::Mat &Tyw)
             break;
         }
     }
-    cout << "right: " << CurrentThetaRight << " " << CurrentMPRight << " " << i << endl;
+    //cout << "right: " << CurrentThetaRight << " " << CurrentMPRight << " " << i << endl;
 
     //Search left
     float CurrentThetaLeft = 0;
@@ -1722,16 +1722,17 @@ void Tracking::GetYunTaiPose(const cv::Mat &Tcw, cv::Mat &Tyw)
             break;
         }
     }
-    cout << "left: " << CurrentThetaLeft << " " << CurrentMPLeft << " " << i << endl;
+    //cout << "left: " << CurrentThetaLeft << " " << CurrentMPLeft << " " << i << endl;
 
     if(CurrentMPLeft > CurrentMPRight + 10)
         mTheta = CurrentThetaLeft;
     else
         mTheta = CurrentThetaRight;
 
-    mpYunTai->UpdateYunTaiPose(mTheta);
+    if(mpYunTai)
+        mpYunTai->UpdateYunTaiPose(mTheta);
 
-    cout << "theta: " << mTheta / M_PI *180 << endl;
+    //cout << "theta: " << mTheta / M_PI *180 << endl;
 
     cv::Mat Tyc = cv::Mat::zeros(4,4,CV_32F);
     Tyc.at<float>(0,0) = cos(mTheta);    Tyc.at<float>(0,2) = -sin(mTheta);
@@ -1740,7 +1741,7 @@ void Tracking::GetYunTaiPose(const cv::Mat &Tcw, cv::Mat &Tyw)
     Tyc.at<float>(3,3) = 1;
     Tyw = Tyc * Tcw;
 
-    cout << "YunTai time consuming: " << t_m.toc() << endl;
+    //cout << "YunTai time consuming: " << t_m.toc() << endl;
 }
 
 int Tracking::GetMapPointsInView(const float theta, const set< pair<float, float> > &sMapPointProject)

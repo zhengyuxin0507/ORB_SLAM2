@@ -5,7 +5,7 @@ namespace ORB_SLAM2
 
 YunTai::YunTai():
 mTheta(0), mThetaStep(0.05), mWindowWidth(0.84), mWindowHeight(0.61),
-mbStopRequested(false), mbStopped(false), mbFinishRequested(false), mbFinished(false)
+mbFinishRequested(false), mbFinished(false)
 {
     //TODO:
 }
@@ -185,12 +185,99 @@ int YunTai::GetMapPointsInView(const float theta, const set< pair<float, float> 
 void YunTai::UpdateYunTaiPose(const float theta)
 {
     unique_lock<mutex> lock(mMutex);
-
     mTheta = theta; 
+}
+
+void YunTai::TurnLeft(const float v)
+{
+    int num[]={0xFF,0x01,0x00,0x04,0x00,0x00,0x00};
+    char buff[7];
+
+    int vel = static_cast<int>(0x3F * v);
+    if(vel > 0x3F)
+        vel = 0x3F;
+    if(vel < 0)
+        vel = 0x00;
+
+    num[4] = vel;
+    num[6] = (num[1] + num[2] + num[3] + num[4] + num[5]) % 0x100;
+
+    for(int i = 0; i < 7; i++)
+        buff[i] = static_cast<char>(num[i]);
+
+    write(fd,buff,7);
+}
+
+void YunTai::TurnRight(const float v)
+{
+    int num[]={0xFF,0x01,0x00,0x02,0x00,0x00,0x00};
+    char buff[7];
+
+    int vel = static_cast<int>(0x3F * v);
+    if(vel > 0x3F)
+        vel = 0x3F;
+    if(vel < 0)
+        vel = 0x00;
+
+    num[4] = vel;
+    num[6] = (num[1] + num[2] + num[3] + num[4] + num[5]) % 0x100;
+
+    for(int i = 0; i < 7; i++)
+        buff[i] = static_cast<char>(num[i]);
+
+    write(fd,buff,7);
+}
+
+void YunTai::Stop()
+{
+    int num[]={0xFF,0x01,0x00,0x00,0x00,0x00,0x01};
+    char buff[7];
+
+    for(int i = 0; i < 7; i++)
+        buff[i] = static_cast<char>(num[i]);
+
+    write(fd,buff,7);
+}
+
+void YunTai::GetYaw(int &yaw)
+{
+    int num[]={0xFF,0x01,0x00,0x51,0x00,0x00,0x52};
+    char buff[7];
+    //char recv[7];
+    char* recv;
+    for(int i = 0; i < 7; i++)
+        buff[i] = static_cast<char>(num[i]);
+
+    write(fd, buff, 7);
+    std::cout << "get data2" << std::endl;
+    int state;
+    write(fd, buff, 7);
+    state = read(fd, recv, 1);
+    if(state > -1)
+        printf("recv buff is: %s\n", recv);
+    std::cout << "state: " << state << std::endl;
+    //std::cout << "recv buff: ";
+    //for(int i = 0; i < 7; i++)
+    //    std::cout << *(recv+i) << " ";
+    //std::cout << std::endl;
 }
 
 void YunTai::Run()
 {
+    char *dev  = "/dev/ttyUSB0";
+    fd = OpenDev(dev);
+    set_speed(fd,9600);
+
+    if (set_Parity(fd,8,1,'N') == -1)  
+    {
+        printf("Set Parity Error/n");
+        return;
+    }
+
+    char command;
+    char vel;
+    int yaw;
+
     float theta;
     while(1)
     {
@@ -199,52 +286,28 @@ void YunTai::Run()
             theta = mTheta;
         }
 
-        cout << "zyx flag: " << theta << endl;
-
-        /*if(Stop())
+        if(theta > 0.09)
         {
-            // Safe area to stop
-            while(isStopped() && !CheckFinish())
-            {
-                usleep(3000);
-            }
-
-            if(CheckFinish())
-                break;
-        }*/
+            TurnRight(0.1);
+        }
+        else if(theta < -0.09)
+        {
+            TurnLeft(0.1);
+        }
+        else
+        {
+            Stop();
+        }
 
         if(CheckFinish())
             break;
 
-        usleep(100000);
+        usleep(50000);
     }
+
+    close(fd);
 
     SetFinish();
-}
-
-bool YunTai::Stop()
-{
-    unique_lock<mutex> lock(mMutexStop);
-    if(mbStopRequested)
-    {
-        mbStopped = true;
-        cout << "YunTai Control STOP" << endl;
-        return true;
-    }
-
-    return false;
-}
-
-bool YunTai::isStopped()
-{
-    unique_lock<mutex> lock(mMutexStop);
-    return mbStopped;
-}
-
-bool YunTai::stopRequested()
-{
-    unique_lock<mutex> lock(mMutexStop);
-    return mbStopRequested;
 }
 
 bool YunTai::CheckFinish()
@@ -263,8 +326,6 @@ void YunTai::SetFinish()
 {
     unique_lock<mutex> lock(mMutexFinish);
     mbFinished = true;    
-    unique_lock<mutex> lock2(mMutexStop);
-    mbStopped = true;
 }
 
 bool YunTai::isFinished()

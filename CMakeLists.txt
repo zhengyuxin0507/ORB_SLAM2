@@ -76,6 +76,7 @@ src/Sim3Solver.cc
 src/Initializer.cc
 src/Viewer.cc
 src/YunTai.cc
+src/serial.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
