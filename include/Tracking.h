@@ -49,6 +49,7 @@ class Map;
 class LocalMapping;
 class LoopClosing;
 class System;
+class YunTai;
 
 class Tracking
 {  
@@ -65,6 +66,7 @@ public:
     void SetLocalMapper(LocalMapping* pLocalMapper);
     void SetLoopClosing(LoopClosing* pLoopClosing);
     void SetViewer(Viewer* pViewer);
+    void SetYunTai(YunTai* pYunTai);
 
     // Load new settings
     // The focal lenght should be similar or scale prediction will fail when projecting points
@@ -164,6 +166,7 @@ protected:
     //Other Thread Pointers
     LocalMapping* mpLocalMapper;
     LoopClosing* mpLoopClosing;
+    YunTai* mpYunTai;
 
     //ORB
     ORBextractor* mpORBextractorLeft, *mpORBextractorRight;

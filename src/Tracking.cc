@@ -165,6 +165,11 @@ void Tracking::SetViewer(Viewer *pViewer)
     mpViewer=pViewer;
 }
 
+void Tracking::SetYunTai(YunTai *pYunTai)
+{
+    mpYunTai=pYunTai; 
+}
+
 
 cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp)
 {
@@ -1626,86 +1631,6 @@ cv::Vec3f Tracking::RotationMatrixToEuler(cv::Mat &R)
     return cv::Vec3f(x, y, z);
 }
 
-/*void Tracking::GetYunTaiPose(const cv::Mat &Tcw, cv::Mat &Tyw)
-{
-    TicToc t_m;
-
-    const cv::Mat Rcw = Tcw.rowRange(0,3).colRange(0,3);
-    const cv::Mat tcw = Tcw.rowRange(0,3).col(3);
-
-    mvMapPointHist.clear();
-    mvMapPointHist.resize(315, 0);
-
-    vector<MapPoint*> vMapPoints = mpMap->GetAllMapPoints();
-    for(size_t i = 0; i < vMapPoints.size(); i++)
-    {
-        MapPoint* pMP = vMapPoints[i];
-        if(pMP && !pMP->isBad())
-        {
-            cv::Mat x3Dw = pMP->GetWorldPos();
-            cv::Mat x3Dc = Rcw*x3Dw+tcw;
-
-            const float xc = x3Dc.at<float>(0);
-            const float zc = x3Dc.at<float>(2);
-
-            float theta = atan2(zc, xc);
-            int idx = round((theta + M_PI) * 50);
-            mvMapPointHist[idx]++;
-
-            /*const float xc = x3Dc.at<float>(0);
-            const float yc = x3Dc.at<float>(1);
-            const float invzc = 1.0/x3Dc.at<float>(2);
-
-            if(invzc<0)
-                continue;
-
-            float u = mCurrentFrame.fx*xc*invzc+mCurrentFrame.cx;
-            float v = mCurrentFrame.fy*yc*invzc+mCurrentFrame.cy;
-
-            if(u<mCurrentFrame.mnMinX || u>mCurrentFrame.mnMaxX)
-                continue;
-            if(v<mCurrentFrame.mnMinY || v>mCurrentFrame.mnMaxY)
-                continue;*/
-
-/*        }
-    }
-
-    int best_idx = 157;
-    int max_nMP = 0;
-    for(size_t i = 0; i < mvMapPointHist.size(); i++)
-    {
-        int iend = i + 20;
-        if(iend > mvMapPointHist.size())
-            iend = mvMapPointHist.size();
-
-        int sum = 0;
-        for(int j = i; j < iend; j++)
-        {
-            sum += mvMapPointHist[j];
-        }
-
-        if(sum > max_nMP)
-        {
-            best_idx = (i + iend)/2;
-            max_nMP = sum;
-        }
-    }
-
-    float angle = static_cast<float>(best_idx) / 315 * 2 * M_PI - M_PI;
-
-    cout << "Best YunTai angle: " << angle / M_PI * 180 << endl;
-
-    cv::Mat Tyc = cv::Mat::zeros(4,4,CV_32F);
-
-    Tyc.at<float>(0,0) = cos(angle);    Tyc.at<float>(0,2) = sin(angle);
-    Tyc.at<float>(1,1) = 1;
-    Tyc.at<float>(2,0) = -sin(angle);   Tyc.at<float>(2,2) = cos(angle);
-    Tyc.at<float>(3,3) = 1;
-    Tyw = Tyc * Tcw;
-
-    cout << "YunTai time consuming: " << t_m.toc() << endl;
-}*/
-
 void Tracking::GetYunTaiPose(const cv::Mat &Tcw, cv::Mat &Tyw)
 {
     TicToc t_m;
@@ -1764,7 +1689,6 @@ void Tracking::GetYunTaiPose(const cv::Mat &Tcw, cv::Mat &Tyw)
             NextThetaRight = CurrentThetaRight + mThetaStep;
             if(NextThetaRight > M_PI)
                 NextThetaRight -= 2*M_PI;
-            cout << "NextMPRight: " << NextMPRight << endl;
         }
         else
         {
@@ -1800,45 +1724,14 @@ void Tracking::GetYunTaiPose(const cv::Mat &Tcw, cv::Mat &Tyw)
     }
     cout << "left: " << CurrentThetaLeft << " " << CurrentMPLeft << " " << i << endl;
 
-    if(CurrentMPLeft > CurrentMPRight)
+    if(CurrentMPLeft > CurrentMPRight + 10)
         mTheta = CurrentThetaLeft;
     else
         mTheta = CurrentThetaRight;
 
+    mpYunTai->UpdateYunTaiPose(mTheta);
+
     cout << "theta: " << mTheta / M_PI *180 << endl;
-
-    /*int best_idx = 157;
-    int max_nMP = 0;
-    for(size_t i = 0; i < mvMapPointHist.size(); i++)
-    {
-        int iend = i + 20;
-        if(iend > mvMapPointHist.size())
-            iend = mvMapPointHist.size();
-
-        int sum = 0;
-        for(int j = i; j < iend; j++)
-        {
-            sum += mvMapPointHist[j];
-        }
-
-        if(sum > max_nMP)
-        {
-            best_idx = (i + iend)/2;
-            max_nMP = sum;
-        }
-    }
-
-    float angle = static_cast<float>(best_idx) / 315 * 2 * M_PI - M_PI;
-
-    cout << "Best YunTai angle: " << angle / M_PI * 180 << endl;
-
-    cv::Mat Tyc = cv::Mat::zeros(4,4,CV_32F);
-
-    Tyc.at<float>(0,0) = cos(angle);    Tyc.at<float>(0,2) = sin(angle);
-    Tyc.at<float>(1,1) = 1;
-    Tyc.at<float>(2,0) = -sin(angle);   Tyc.at<float>(2,2) = cos(angle);
-    Tyc.at<float>(3,3) = 1;
-    Tyw = Tyc * Tcw;*/
 
     cv::Mat Tyc = cv::Mat::zeros(4,4,CV_32F);
     Tyc.at<float>(0,0) = cos(mTheta);    Tyc.at<float>(0,2) = -sin(mTheta);

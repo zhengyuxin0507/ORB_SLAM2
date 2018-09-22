@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 2.8)
 project(ORB_SLAM2)
 
-IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE Release)
-ENDIF()
+SET(CMAKE_BUILD_TYPE Debug)
+#SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
+
+#IF(NOT CMAKE_BUILD_TYPE)
+#  SET(CMAKE_BUILD_TYPE Release)
+#ENDIF()
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
@@ -28,6 +31,8 @@ endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
+set(OpenCV_DIR "/home/zhengyuxin/package/opencv3.2/opencv-3.2.0/build")
+
 find_package(OpenCV 3.0 QUIET)
 if(NOT OpenCV_FOUND)
    find_package(OpenCV 2.4.3 QUIET)
@@ -35,6 +40,8 @@ if(NOT OpenCV_FOUND)
       message(FATAL_ERROR "OpenCV > 2.4.3 not found.")
    endif()
 endif()
+
+message("Opencv Version: " ${OpenCV_VERSION})
 
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
@@ -68,6 +75,7 @@ src/KeyFrameDatabase.cc
 src/Sim3Solver.cc
 src/Initializer.cc
 src/Viewer.cc
+src/YunTai.cc
 )
 
 target_link_libraries(${PROJECT_NAME}
