@@ -102,7 +102,8 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         mpTracker->SetViewer(mpViewer);
     }
 
-    bool bUseYunTai = true;
+    bool bUseYunTai;
+    fsSettings["YunTai.Use"] >> bUseYunTai;
     if(bUseYunTai)
     {
         mpYunTai = new YunTai();

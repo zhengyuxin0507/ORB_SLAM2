@@ -271,7 +271,8 @@ void YunTai::Run()
     if (set_Parity(fd,8,1,'N') == -1)  
     {
         printf("Set Parity Error/n");
-        return;
+        //return;
+        exit(0);
     }
 
     char command;
