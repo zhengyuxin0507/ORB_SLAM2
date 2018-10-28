@@ -55,6 +55,8 @@ private:
 
     void TurnRight(const float v);
 
+    void GoZero();
+
     void Stop();
 
     void GetYaw(int &yaw);
