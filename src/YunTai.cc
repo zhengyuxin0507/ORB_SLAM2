@@ -239,6 +239,17 @@ void YunTai::Stop()
     write(fd,buff,7);
 }
 
+void YunTai::GoZero()
+{
+    int num[]={0xFF,0x01,0x00,0x4B,0x00,0x00,0x4C};
+    char buff[7];
+
+    for(int i = 0; i < 7; i++)
+        buff[i] = static_cast<char>(num[i]);
+
+    write(fd,buff,7);
+}
+
 void YunTai::GetYaw(int &yaw)
 {
     int num[]={0xFF,0x01,0x00,0x51,0x00,0x00,0x52};
@@ -275,6 +286,9 @@ void YunTai::Run()
         exit(0);
     }
 
+    GoZero();
+    sleep(2);
+
     char command;
     char vel;
     int yaw;
@@ -306,6 +320,8 @@ void YunTai::Run()
         usleep(50000);
     }
 
+    Stop();
+    usleep(50000);
     close(fd);
 
     SetFinish();
