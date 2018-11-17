@@ -230,6 +230,7 @@ protected:
     float mThetaStep = 0.05;
     float mWindowWidth = 0.84;
     float mWindowHeight = 0.61;
+    float mbYunTaiCompute = 0;
 
     //Color order (true RGB, false BGR, ignored if grayscale)
     bool mbRGB;

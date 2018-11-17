@@ -101,6 +101,14 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     cout << "- p2: " << DistCoef.at<float>(3) << endl;
     cout << "- fps: " << fps << endl;
 
+    cout << endl;
+    mbYunTaiCompute = fSettings["YunTai.Compute"];
+    if(mbYunTaiCompute)
+        cout << "we will compute the pose of YunTai" << endl;
+    else
+        cout << "we will not compute the pose of YunTai" << endl;
+    cout << endl;
+
 
     int nRGB = fSettings["Camera.RGB"];
     mbRGB = nRGB;
@@ -408,7 +416,6 @@ void Tracking::Track()
 
         mCurrentFrame.mpReferenceKF = mpReferenceKF;
 
-        TicToc tLocalBA;
 
         // If we have an initial estimation of the camera pose and matching. Track the local map.
         if(!mbOnlyTracking)
@@ -426,8 +433,6 @@ void Tracking::Track()
             if(bOK && !mbVO)
                 bOK = TrackLocalMap();
         }
-
-        cout << "local BA time consume: " << tLocalBA.toc() << endl;
 
         if(bOK)
             mState = OK;
@@ -451,8 +456,13 @@ void Tracking::Track()
             else
                 mVelocity = cv::Mat();
 
-            GetYunTaiPose(mCurrentFrame.mTcw, mTyw);
-            mpMapDrawer->SetCurrenYunTaiPose(mTyw);
+            if(mbYunTaiCompute)
+            {
+                GetYunTaiPose(mCurrentFrame.mTcw, mTyw);
+                mpMapDrawer->SetCurrenYunTaiPose(mTyw);
+            }
+            else
+                mpMapDrawer->SetCurrenYunTaiPose(cv::Mat::eye(4,4,CV_32F));
 
             mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
 
