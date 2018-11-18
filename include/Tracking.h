@@ -96,6 +96,8 @@ public:
     // Input sensor
     int mSensor;
 
+    float mTheta = 0;       //the rotation(rad) between YunTai and Camera in y axis
+
     // Current Frame
     Frame mCurrentFrame;
     cv::Mat mImGray;
@@ -226,7 +228,7 @@ protected:
 
     //YunTai
     cv::Mat mTyw;       //rotation matrix between YunTai and world
-    float mTheta = 0;       //the rotation(rad) between YunTai and Camera in y axis
+    //float mTheta = 0;       //the rotation(rad) between YunTai and Camera in y axis
     float mThetaStep = 0.05;
     float mWindowWidth = 0.84;
     float mWindowHeight = 0.61;

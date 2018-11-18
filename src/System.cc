@@ -104,6 +104,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     bool bUseYunTai;
     fsSettings["YunTai.Use"] >> bUseYunTai;
+    fsSettings["YunTai.Use_ros"] >> mbUseYunTai_ros;
     if(bUseYunTai)
     {
         mpYunTai = new YunTai();
@@ -221,6 +222,10 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
     mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+    if(mbUseYunTai_ros)
+        mTheta = mpTracker->mTheta;
+    else
+        mTheta = 0;
     return Tcw;
 }
 

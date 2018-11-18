@@ -68,5 +68,6 @@ Viewer.ViewpointZ: -1.8
 Viewer.ViewpointF: 500
 
 YunTai.Use: 0
+YunTai.Use_ros: 0
 YunTai.Compute: 0
 

@@ -124,6 +124,8 @@ public:
     std::vector<MapPoint*> GetTrackedMapPoints();
     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
 
+    float mTheta;
+
 private:
 
     // Input sensor
@@ -158,6 +160,7 @@ private:
 
     //YunTai Control.
     YunTai* mpYunTai;
+    bool mbUseYunTai_ros;
 
     // System threads: Local Mapping, Loop Closing, Viewer.
     // The Tracking thread "lives" in the main execution thread that creates the System object.

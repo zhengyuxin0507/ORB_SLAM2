@@ -29,6 +29,7 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
+#include <std_msgs/Float64.h>
 
 #include<opencv2/core/core.hpp>
 
@@ -45,6 +46,11 @@ public:
 
     ORB_SLAM2::System* mpSLAM;
 };
+
+ros::Publisher cam_vel_pub;
+std_msgs::Float64 cam_vel;
+
+bool zyx_flag = 1;
 
 int main(int argc, char **argv)
 {
@@ -64,6 +70,8 @@ int main(int argc, char **argv)
     ImageGrabber igb(&SLAM);
 
     ros::NodeHandle nh;
+
+    cam_vel_pub = nh.advertise<std_msgs::Float64>("/r2d2_camera_controller/command", 1);
 
     message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, "/camera/rgb/image_raw", 1);
     //message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, "camera/depth_registered/image_raw", 1);
@@ -110,7 +118,21 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
         return;
     }
 
+    if(zyx_flag)
+    {
+        zyx_flag = 0;
+        cout << "first image time: " << cv_ptrRGB->header.stamp.toSec() << endl;
+    }
+
     mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
+    
+    if(mpSLAM->mTheta > 0.09)
+        cam_vel.data = -0.1;
+    else if(mpSLAM->mTheta < -0.09)
+        cam_vel.data = 0.1;
+    else
+        cam_vel.data = 0.0;
+    cam_vel_pub.publish(cam_vel);
 }
 
 
