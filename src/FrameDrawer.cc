@@ -212,7 +212,8 @@ void FrameDrawer::Update(Tracking *pTracker)
     mbOnlyTracking = pTracker->mbOnlyTracking;
 
     //YunTai
-    //mvCurrKeyPt = pTracker->mCurrentFrame.mvCurrKeyPt;
+    // mvMapPointHist = pTracker->mvMapPointHist;
+    // mvMapPointProject = pTracker->mvMapPointProject;
     mvMapPointHist = pTracker->mvMapPointHist;
     mvMapPointProject = pTracker->mvMapPointProject;
 
@@ -239,6 +240,17 @@ void FrameDrawer::Update(Tracking *pTracker)
         }
     }
     mState=static_cast<int>(pTracker->mLastProcessedState);
+}
+
+cv::Mat FrameDrawer::GetShowMat()
+{
+    unique_lock<mutex> lock(mMutexShowMat);
+    return mpAT->mShowMat.clone();
+}
+
+void FrameDrawer::SetAttentionTranslation(AttentionTranslation* pAT)
+{
+    mpAT = pAT;
 }
 
 } //namespace ORB_SLAM

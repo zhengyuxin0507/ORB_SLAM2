@@ -26,6 +26,7 @@
 #include "MapDrawer.h"
 #include "Tracking.h"
 #include "System.h"
+#include "AttentionTranslation.h"
 
 #include <mutex>
 
@@ -36,6 +37,7 @@ class Tracking;
 class FrameDrawer;
 class MapDrawer;
 class System;
+class AttentionTranslation;
 
 class Viewer
 {
@@ -56,6 +58,8 @@ public:
 
     void Release();
 
+    void SetAttentionTranslation(AttentionTranslation *pAT);
+
 private:
 
     bool Stop();
@@ -64,6 +68,7 @@ private:
     FrameDrawer* mpFrameDrawer;
     MapDrawer* mpMapDrawer;
     Tracking* mpTracker;
+    AttentionTranslation* mpAT;
 
     // 1/fps in ms
     double mT;

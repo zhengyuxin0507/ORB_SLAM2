@@ -442,6 +442,9 @@ void Tracking::Track()
         // Update drawer
         mpFrameDrawer->Update(this);
 
+        //Used for Attention Translation thread
+        mbOK = bOK;
+
         // If tracking were good, check if we insert a keyframe
         if(bOK)
         {
@@ -456,13 +459,15 @@ void Tracking::Track()
             else
                 mVelocity = cv::Mat();
 
-            if(mbYunTaiCompute)
-            {
-                GetYunTaiPose(mCurrentFrame.mTcw, mTyw);
-                mpMapDrawer->SetCurrenYunTaiPose(mTyw);
-            }
-            else
-                mpMapDrawer->SetCurrenYunTaiPose(cv::Mat::eye(4,4,CV_32F));
+            mbATSwitch = 1;
+
+            // if(mbYunTaiCompute)
+            // {
+            //     GetYunTaiPose(mCurrentFrame.mTcw, mTyw);
+            //     mpMapDrawer->SetCurrenYunTaiPose(mTyw);
+            // }
+            // else
+            //     mpMapDrawer->SetCurrenYunTaiPose(cv::Mat::eye(4,4,CV_32F));
 
             mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
 

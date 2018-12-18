@@ -36,6 +36,7 @@
 #include "ORBVocabulary.h"
 #include "Viewer.h"
 #include "YunTai.h"
+#include "AttentionTranslation.h"
 
 namespace ORB_SLAM2
 {
@@ -47,6 +48,7 @@ class Tracking;
 class LocalMapping;
 class LoopClosing;
 class YunTai;
+class AttentionTranslation;
 
 class System
 {
@@ -162,12 +164,16 @@ private:
     YunTai* mpYunTai;
     bool mbUseYunTai_ros;
 
+    //Attention Translation
+    AttentionTranslation* mpAT;
+
     // System threads: Local Mapping, Loop Closing, Viewer.
     // The Tracking thread "lives" in the main execution thread that creates the System object.
     std::thread* mptLocalMapping;
     std::thread* mptLoopClosing;
     std::thread* mptViewer;
     std::thread* mptYunTai;
+    std::thread* mptAT;
 
     // Reset flag
     std::mutex mMutexReset;

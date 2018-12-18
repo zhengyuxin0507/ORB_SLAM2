@@ -94,12 +94,24 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpLoopCloser = new LoopClosing(mpMap, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR);
     mptLoopClosing = new thread(&ORB_SLAM2::LoopClosing::Run, mpLoopCloser);
 
+    bool bUseAT = 1;
+    if(bUseAT)
+    {
+        cout << "create AT thread !!!!!" << endl;
+        mpAT = new AttentionTranslation(mpMap, mpMapDrawer);
+        mptAT = new thread(&ORB_SLAM2::AttentionTranslation::Run, mpAT);
+        mpAT->SetTracker(mpTracker);
+        mpFrameDrawer->SetAttentionTranslation(mpAT);
+    }
+
     //Initialize the Viewer thread and launch
     if(bUseViewer)
     {
         mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
         mptViewer = new thread(&Viewer::Run, mpViewer);
         mpTracker->SetViewer(mpViewer);
+        if(bUseAT)
+            mpViewer->SetAttentionTranslation(mpAT);
     }
 
     bool bUseYunTai;
@@ -110,6 +122,8 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         mpYunTai = new YunTai();
         mptYunTai = new thread(&ORB_SLAM2::YunTai::Run, mpYunTai);
         mpTracker->SetYunTai(mpYunTai);
+        if(bUseAT)
+            mpAT->SetYunTai(mpYunTai);
     }
 
     //Set pointers between threads

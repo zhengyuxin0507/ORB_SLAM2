@@ -77,6 +77,7 @@ src/Initializer.cc
 src/Viewer.cc
 src/YunTai.cc
 src/serial.cpp
+src/AttentionTranslation.cc
 )
 
 target_link_libraries(${PROJECT_NAME}

@@ -106,6 +106,11 @@ public:
     std::vector<int> mvMapPointHist;
     std::vector< pair<float, float> > mvMapPointProject;
 
+    //Attention Translation
+    bool mbOK;
+    long mFrameNum;
+    bool mbATSwitch;
+
     // Initialization Variables (Monocular)
     std::vector<int> mvIniLastMatches;
     std::vector<int> mvIniMatches;

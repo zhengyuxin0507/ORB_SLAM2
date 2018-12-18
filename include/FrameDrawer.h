@@ -24,6 +24,7 @@
 #include "Tracking.h"
 #include "MapPoint.h"
 #include "Map.h"
+#include "AttentionTranslation.h"
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
@@ -36,6 +37,7 @@ namespace ORB_SLAM2
 
 class Tracking;
 class Viewer;
+class AttentionTranslation;
 
 class FrameDrawer
 {
@@ -52,6 +54,11 @@ public:
     cv::Mat mTestMat;
     std::vector<int> mvMapPointHist;
     std::vector<pair<float, float>> mvMapPointProject;
+
+    //Attention Translation
+    cv::Mat GetShowMat();
+    AttentionTranslation* mpAT;
+    void SetAttentionTranslation(AttentionTranslation* pAT);
 
 protected:
 
@@ -71,6 +78,7 @@ protected:
     Map* mpMap;
 
     std::mutex mMutex;
+    std::mutex mMutexShowMat;
 
     //zyx
     vector<cv::KeyPoint> mvCurrKeyPt;

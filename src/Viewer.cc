@@ -138,8 +138,10 @@ void Viewer::Run()
         pangolin::FinishFrame();
 
         cv::Mat im = mpFrameDrawer->DrawFrame();
+        cv::Mat ShowMat = mpFrameDrawer->GetShowMat();
         cv::imshow("ORB-SLAM2: Current Frame",im);
-        cv::imshow("test", mpFrameDrawer->mTestMat);
+        //cv::imshow("test", mpFrameDrawer->mTestMat);
+        cv::imshow("test", ShowMat);
         cv::waitKey(mT);
 
         if(menuReset)
@@ -231,6 +233,11 @@ void Viewer::Release()
 {
     unique_lock<mutex> lock(mMutexStop);
     mbStopped = false;
+}
+
+void Viewer::SetAttentionTranslation(AttentionTranslation* pAT)
+{
+    mpAT=pAT;
 }
 
 }
