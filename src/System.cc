@@ -236,8 +236,14 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
     mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+    // if(mbUseYunTai_ros)
+    //     mTheta = mpTracker->mTheta;
+    // else
+    //     mTheta = 0;
     if(mbUseYunTai_ros)
-        mTheta = mpTracker->mTheta;
+    {
+        mTheta = mpAT->mTheta;
+    }
     else
         mTheta = 0;
     return Tcw;

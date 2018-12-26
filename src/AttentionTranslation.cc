@@ -4,7 +4,7 @@ namespace ORB_SLAM2
 {
 
 AttentionTranslation::AttentionTranslation(Map *pMap, MapDrawer* pMapDrawer):
-mpMap(pMap),mpMapDrawer(pMapDrawer),mTheta(0), mThetaStep(0.05), mWindowWidth(0.84), mWindowHeight(0.61)
+mTheta(0), mShowMat(cv::Mat::zeros(320,640,CV_8UC1)), mpMap(pMap),mpMapDrawer(pMapDrawer), mThetaStep(0.05), mWindowWidth(0.84), mWindowHeight(0.61)
 {
     //TODO:
 }
@@ -66,8 +66,91 @@ void AttentionTranslation::DrawFrame()
     }
 
     mShowMat = temp;
-    // cv::imshow("adc", temp);
-    // cv::waitKey(1);
+}
+
+void AttentionTranslation::GetYunTaiPose_second(const cv::Mat &Tcw, cv::Mat &Tyw)
+{
+    TicToc t_m;
+
+    const cv::Mat Rcw = Tcw.rowRange(0,3).colRange(0,3);
+    const cv::Mat tcw = Tcw.rowRange(0,3).col(3);
+
+    mvMapPointProject.clear();
+
+    vector<MapPoint*> vMapPoints = mpMap->GetAllMapPoints();
+
+    for(size_t i = 0; i < vMapPoints.size(); i++)
+    {
+        MapPoint* pMP = vMapPoints[i];
+        if(pMP && !pMP->isBad())
+        {
+            cv::Mat x3Dw = pMP->GetWorldPos();
+            cv::Mat x3Dc = Rcw*x3Dw+tcw;
+
+            const float xc = x3Dc.at<float>(0);
+            const float yc = x3Dc.at<float>(1);
+            const float zc = x3Dc.at<float>(2);
+
+            if(fabs(zc) > 5)
+                continue;
+
+            float theta = atan2(xc, zc);
+            float gama = atan(-yc/sqrt(zc*zc+xc*xc));
+            
+            mvMapPointProject.push_back(make_pair(theta, gama));
+        }
+    }
+
+    set< pair<float, float> > sMapPointProject;
+    int iMapPointProjectNum = 0;
+    for(size_t i = 0; i < mvMapPointProject.size(); i++)
+    {
+        if(mvMapPointProject[i].first > (-1 - mWindowWidth/2) && mvMapPointProject[i].first < (1 + mWindowWidth/2)) && mvMapPointProject[i].second > -mWindowHeight/2 && mvMapPointProject[i].second < mWindowHeight/2)
+        {
+            sMapPointProject.insert(make_pair(mvMapPointProject[i].first, mvMapPointProject[i].second));
+            nMapPointProjectNum++;
+        }
+    }
+
+    cout << "Point Project time consume: " << t_m.toc() << endl;
+
+    vector< pair<int, float> > vScore;
+    for(float i = -1; i <= 1; i+=0.2)
+    {
+        pair<int, float> temp = GetScore(i-mWindowWidth/2, i+mWindowWidth/2, sMapPointProject);
+        vScore
+    }
+
+}
+
+pair<int, float> AttentionTranslation::GetScore(const float lb, const float ub, const set< pair<float, float> > &sMapPointProject)
+{
+    float ThetaCenter = 0;
+    float GamaCenter = 0;
+    vector< pair<float, float> > vTemp;
+
+    set< pair<float, float> >::iterator it;
+    for(it = sMapPointProject.lower_bound(make_pair(lb, -4.0f)); it != sMapPointProject.lower_bound(make_pair(ub, -4.0f)); it++)
+    {
+        if(fabs(it->second) > mWindowHeight/2)
+            continue;
+
+        ThetaCenter += it->first;
+        GamaCenter += it->second;
+        vTemp.push_back(make_pair(it->first, it->second));
+    }
+
+    ThetaCenter /= vTemp.size();
+    GamaCenter /= vTemp.size();
+
+    float var = 0;
+    for(int i = 0; i < vTemp.size(); i++)
+    {
+        var += sqrt((vTemp[i]->first-ThetaCenter)*(vTemp[i]->first-ThetaCenter) + (vTemp[i]->second-GamaCenter)*(vTemp[i]->second-GamaCenter)) 
+    }
+    var /= vTemp.size();
+
+    return make_pair(vTemp.size(), var);
 }
 
 void AttentionTranslation::GetYunTaiPose(const cv::Mat &Tcw, cv::Mat &Tyw)
@@ -96,19 +179,23 @@ void AttentionTranslation::GetYunTaiPose(const cv::Mat &Tcw, cv::Mat &Tyw)
             if(fabs(zc) > 5)
                 continue;
 
-            //float theta = atan2(zc, xc);
+            float xc2 = xc*xc;
+            float zc2 = zc*zc;
             float theta = atan2(xc, zc);
-            float gama = atan(-yc/sqrt(zc*zc+xc*xc));
+            float gama = atan(-yc/sqrt(xc2+zc2));
             
             mvMapPointProject.push_back(make_pair(theta, gama));
         }
     }
+
 
     set< pair<float, float> > sMapPointProject;
     for(size_t i = 0; i < mvMapPointProject.size(); i++)
     {
         sMapPointProject.insert(make_pair(mvMapPointProject[i].first, mvMapPointProject[i].second));
     }
+
+    cout << "Point Project time consume: " << t_m.toc() << endl;
 
     //Search right
     float CurrentThetaRight = 0;

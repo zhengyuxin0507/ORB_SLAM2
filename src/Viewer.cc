@@ -140,7 +140,6 @@ void Viewer::Run()
         cv::Mat im = mpFrameDrawer->DrawFrame();
         cv::Mat ShowMat = mpFrameDrawer->GetShowMat();
         cv::imshow("ORB-SLAM2: Current Frame",im);
-        //cv::imshow("test", mpFrameDrawer->mTestMat);
         cv::imshow("test", ShowMat);
         cv::waitKey(mT);
 

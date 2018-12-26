@@ -33,9 +33,15 @@ public:
 
     void GetYunTaiPose(const cv::Mat &Tcw, cv::Mat &Tyw);
 
+    void GetYunTaiPose_second(const cv::Mat &Tcw, cv::Mat &Tyw);
+
+    pair<int, float> GetScore(const float lb, const float ub, const set< pair<float, float> > &sMapPointProject);
+
     int GetMapPointsInView(const float theta, const set< pair<float, float> > &sMapPointProject);
 
     void DrawFrame();
+
+    float mTheta;   //the rotation(rad) between YunTai and Camera in y axis
 
     cv::Mat mShowMat;
 
@@ -46,7 +52,6 @@ private:
     Map* mpMap;  //Map
     MapDrawer* mpMapDrawer;
 
-    float mTheta;   //the rotation(rad) between YunTai and Camera in y axis
     float mThetaStep;
     float mWindowWidth;
     float mWindowHeight;

@@ -53,43 +53,6 @@ cv::Mat FrameDrawer::DrawFrame()
 
         mIm.copyTo(im);
 
-        //YunTai
-        /*mIm.copyTo(mTestMat);
-        if(mTestMat.channels()<3)
-            cvtColor(mTestMat,mTestMat,CV_GRAY2BGR);
-        (for(int i = 0; i < mvCurrKeyPt.size(); i++)
-        {
-        cv::circle(mTestMat, mvCurrKeyPt[i].pt, 2, cv::Scalar(255, 0, 0), 2);
-        }*/
-
-        /*cv::Mat temp(150, 315, CV_8UC1, 255);
-        for(size_t i = 0; i < mvMapPointHist.size(); i++)
-        {
-            for(int j = 0; j < mvMapPointHist[i]; j++)
-                temp.at<uchar>(j, i) = 0;
-        }
-        for(int i = 100; i < 150; i++ )
-            temp.at<uchar>(i, 157) = 0;
-        mTestMat = temp;*/
-
-        cv::Mat temp(320, 640, CV_8UC1, 255);
-        for(size_t i = 0; i < mvMapPointProject.size(); i++)
-        {
-            int idx = round((mvMapPointProject[i].first + M_PI) * 100);
-            int idy = round((-mvMapPointProject[i].second + M_PI/2) * 100);
-
-            cv::circle(temp, cvPoint(idx, idy), 2, 0, 1);
-        }
-        for(int i = 0; i < 640; i++)
-            temp.at<uchar>(160, i) = 0;
-        for(int j = 0; j < 320; j++)
-        {
-            temp.at<uchar>(j, 160) = 0;
-            temp.at<uchar>(j, 320) = 0;
-            temp.at<uchar>(j, 480) = 0;
-        }
-        mTestMat = temp;
-
         if(mState==Tracking::NOT_INITIALIZED)
         {
             vCurrentKeys = mvCurrentKeys;
