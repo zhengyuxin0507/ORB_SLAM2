@@ -30,7 +30,8 @@ void AttentionTranslation::Run()
                 usleep(30000);
                 continue;
             }
-            GetYunTaiPose(mTcw, Tyw);
+            //GetYunTaiPose(mTcw, Tyw);
+            GetYunTaiPose_second(mTcw, Tyw);
             mpMapDrawer->SetCurrenYunTaiPose(Tyw);
 
             DrawFrame();
@@ -56,8 +57,22 @@ void AttentionTranslation::DrawFrame()
 
         cv::circle(temp, cvPoint(idx, idy), 2, 0, 1);
     }
+
+    int lu_x = (mTheta + M_PI - mWindowWidth/2) * 100;
+    int lu_y = (-mWindowHeight/2 + M_PI/2) * 100;
+    int rd_x = (mTheta + M_PI + mWindowWidth/2) * 100;
+    int rd_y = (mWindowHeight/2 + M_PI/2) * 100;
+    for(int i = lu_x; i < rd_x; i++)
+        temp.at<uchar>(lu_y, i) = 0;
+    for(int i = lu_x; i < rd_x; i++)
+        temp.at<uchar>(rd_y, i) = 0;
+    for(int j = lu_y; j < rd_y; j++)
+        temp.at<uchar>(j, lu_x) = 0;
+    for(int j = lu_y; j < rd_y; j++)
+        temp.at<uchar>(j, rd_x) = 0;
+
     for(int i = 0; i < 640; i++)
-    temp.at<uchar>(160, i) = 0;
+        temp.at<uchar>(160, i) = 0;
     for(int j = 0; j < 320; j++)
     {
         temp.at<uchar>(j, 160) = 0;
@@ -102,10 +117,13 @@ void AttentionTranslation::GetYunTaiPose_second(const cv::Mat &Tcw, cv::Mat &Tyw
     }
 
     set< pair<float, float> > sMapPointProject;
-    int iMapPointProjectNum = 0;
+    int nMapPointProjectNum = 0;
+    float LowBound = -1;
+    float UpBound = 1;
+    float Step = 0.2;
     for(size_t i = 0; i < mvMapPointProject.size(); i++)
     {
-        if(mvMapPointProject[i].first > (-1 - mWindowWidth/2) && mvMapPointProject[i].first < (1 + mWindowWidth/2)) && mvMapPointProject[i].second > -mWindowHeight/2 && mvMapPointProject[i].second < mWindowHeight/2)
+        if(mvMapPointProject[i].first > (LowBound - mWindowWidth/2) && mvMapPointProject[i].first < (UpBound + mWindowWidth/2) && mvMapPointProject[i].second > -mWindowHeight/2 && mvMapPointProject[i].second < mWindowHeight/2)
         {
             sMapPointProject.insert(make_pair(mvMapPointProject[i].first, mvMapPointProject[i].second));
             nMapPointProjectNum++;
@@ -114,13 +132,40 @@ void AttentionTranslation::GetYunTaiPose_second(const cv::Mat &Tcw, cv::Mat &Tyw
 
     cout << "Point Project time consume: " << t_m.toc() << endl;
 
-    vector< pair<int, float> > vScore;
-    for(float i = -1; i <= 1; i+=0.2)
+    vector< pair< float, pair<int, float> > > vScore;
+    float VarSum = 0;
+    for(float i = LowBound; i <= UpBound; i+=Step)
     {
         pair<int, float> temp = GetScore(i-mWindowWidth/2, i+mWindowWidth/2, sMapPointProject);
-        vScore
+        VarSum += temp.second; 
+        vScore.push_back(make_pair(i, temp));
     }
 
+    vector< pair<float, float> > vResult; 
+    for(int i = 0; i < vScore.size(); i++)
+    {
+        float score = static_cast<float>(vScore[i].second.first)/nMapPointProjectNum + vScore[i].second.second/VarSum;
+        vResult.push_back(make_pair(vScore[i].first, score));
+    }
+
+    float temp_1 = 0;
+    float temp_2 = 0;
+    for(int i = 0; i < vResult.size(); i++)
+    {
+        if(vResult[i].second > temp_2)
+        {
+            temp_1 = vResult[i].first;
+            temp_2 = vResult[i].second;
+        }
+    }
+    mTheta = temp_1;
+
+    cv::Mat Tyc = cv::Mat::zeros(4,4,CV_32F);
+    Tyc.at<float>(0,0) = cos(mTheta);    Tyc.at<float>(0,2) = -sin(mTheta);
+    Tyc.at<float>(1,1) = 1;
+    Tyc.at<float>(2,0) = sin(mTheta);   Tyc.at<float>(2,2) = cos(mTheta);
+    Tyc.at<float>(3,3) = 1;
+    Tyw = Tyc * Tcw;
 }
 
 pair<int, float> AttentionTranslation::GetScore(const float lb, const float ub, const set< pair<float, float> > &sMapPointProject)
@@ -146,9 +191,13 @@ pair<int, float> AttentionTranslation::GetScore(const float lb, const float ub, 
     float var = 0;
     for(int i = 0; i < vTemp.size(); i++)
     {
-        var += sqrt((vTemp[i]->first-ThetaCenter)*(vTemp[i]->first-ThetaCenter) + (vTemp[i]->second-GamaCenter)*(vTemp[i]->second-GamaCenter)) 
+        var += sqrt((vTemp[i].first-ThetaCenter)*(vTemp[i].first-ThetaCenter) + (vTemp[i].second-GamaCenter)*(vTemp[i].second-GamaCenter));
     }
-    var /= vTemp.size();
+
+    if(vTemp.size() > 0)
+        var /= vTemp.size();
+    else
+        var = 0;
 
     return make_pair(vTemp.size(), var);
 }
@@ -176,7 +225,7 @@ void AttentionTranslation::GetYunTaiPose(const cv::Mat &Tcw, cv::Mat &Tyw)
             const float yc = x3Dc.at<float>(1);
             const float zc = x3Dc.at<float>(2);
 
-            if(fabs(zc) > 5)
+            if(fabs(zc) >10)
                 continue;
 
             float xc2 = xc*xc;

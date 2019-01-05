@@ -128,9 +128,9 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
     mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
     
     if(mpSLAM->mTheta > 0.09)
-        cam_vel.data = -0.1;
+        cam_vel.data = -0.2;
     else if(mpSLAM->mTheta < -0.09)
-        cam_vel.data = 0.1;
+        cam_vel.data = 0.2;
     else
         cam_vel.data = 0.0;
     cam_vel_pub.publish(cam_vel);
