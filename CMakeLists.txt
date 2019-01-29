@@ -45,15 +45,21 @@ message("Opencv Version: " ${OpenCV_VERSION})
 
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
+find_package(octomap REQUIRED)
 
 include_directories(
 ${PROJECT_SOURCE_DIR}
 ${PROJECT_SOURCE_DIR}/include
 ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
+${OCTOMAP_INCLUDE_DIRS}
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+
+add_library(${PROJECT_NAME}_math
+	src/math/Vector3.cpp
+)
 
 add_library(${PROJECT_NAME} SHARED
 src/System.cc
@@ -86,6 +92,8 @@ ${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+#${OCTOMAP_LIBRARIES}
+${PROJECT_NAME}_math
 )
 
 # Build examples

@@ -24,6 +24,7 @@
 #include "MapPoint.h"
 #include "KeyFrame.h"
 #include <set>
+#include "Octree.h"
 
 #include <mutex>
 
@@ -60,6 +61,8 @@ public:
     void clear();
 
     vector<KeyFrame*> mvpKeyFrameOrigins;
+
+    Octree tree;
 
     std::mutex mMutexMapUpdate;
 

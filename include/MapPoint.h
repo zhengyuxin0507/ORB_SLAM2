@@ -24,6 +24,7 @@
 #include"KeyFrame.h"
 #include"Frame.h"
 #include"Map.h"
+#include "Octree.h"
 
 #include<opencv2/core/core.hpp>
 #include<mutex>
@@ -34,7 +35,7 @@ namespace ORB_SLAM2
 class KeyFrame;
 class Map;
 class Frame;
-
+class Octree;
 
 class MapPoint
 {
