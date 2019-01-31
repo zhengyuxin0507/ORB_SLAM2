@@ -40,12 +40,28 @@ void Map::AddKeyFrame(KeyFrame *pKF)
 void Map::AddMapPoint(MapPoint *pMP)
 {
     unique_lock<mutex> lock(mMutexMap);
+
+    cv::Mat x3Dw = pMP->GetWorldPos();
+    const float xw = x3Dw.at<float>(0);
+    const float yw = x3Dw.at<float>(1);
+    const float zw = x3Dw.at<float>(2);
+
+    tree.updateNode(xw, yw, zw, pMP);
+
     mspMapPoints.insert(pMP);
 }
 
 void Map::EraseMapPoint(MapPoint *pMP)
 {
     unique_lock<mutex> lock(mMutexMap);
+
+    cv::Mat x3Dw = pMP->GetWorldPos();
+    const float xw = x3Dw.at<float>(0);
+    const float yw = x3Dw.at<float>(1);
+    const float zw = x3Dw.at<float>(2);
+
+    tree.DeletePoint(xw, yw, zw, pMP);
+
     mspMapPoints.erase(pMP);
 
     // TODO: This only erase the pointer.

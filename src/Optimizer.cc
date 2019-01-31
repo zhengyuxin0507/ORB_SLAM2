@@ -772,7 +772,23 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
     {
         MapPoint* pMP = *lit;
         g2o::VertexSBAPointXYZ* vPoint = static_cast<g2o::VertexSBAPointXYZ*>(optimizer.vertex(pMP->mnId+maxKFid+1));
+
+        //OctreeMap update node second
+        cv::Mat x3Dw = pMP->GetWorldPos();
+        float xw = x3Dw.at<float>(0);
+        float yw = x3Dw.at<float>(1);
+        float zw = x3Dw.at<float>(2);
+        pMap->tree.DeletePoint(xw, yw, zw, pMP);
+
         pMP->SetWorldPos(Converter::toCvMat(vPoint->estimate()));
+
+        //OctreeMap update node second
+        x3Dw = pMP->GetWorldPos();
+        xw = x3Dw.at<float>(0);
+        yw = x3Dw.at<float>(1);
+        zw = x3Dw.at<float>(2);
+        pMap->tree.updateNode(xw, yw, zw, pMP);
+
         pMP->UpdateNormalAndDepth();
     }
 }
@@ -1037,7 +1053,22 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
         Eigen::Matrix<double,3,1> eigCorrectedP3Dw = correctedSwr.map(Srw.map(eigP3Dw));
 
         cv::Mat cvCorrectedP3Dw = Converter::toCvMat(eigCorrectedP3Dw);
+
+        //OctreeMap update node second
+        cv::Mat x3Dw = pMP->GetWorldPos();
+        float xw = x3Dw.at<float>(0);
+        float yw = x3Dw.at<float>(1);
+        float zw = x3Dw.at<float>(2);
+        pMap->tree.DeletePoint(xw, yw, zw, pMP);
+
         pMP->SetWorldPos(cvCorrectedP3Dw);
+
+        //OctreeMap update node second
+        x3Dw = pMP->GetWorldPos();
+        xw = x3Dw.at<float>(0);
+        yw = x3Dw.at<float>(1);
+        zw = x3Dw.at<float>(2);
+        pMap->tree.updateNode(xw, yw, zw, pMP);
 
         pMP->UpdateNormalAndDepth();
     }

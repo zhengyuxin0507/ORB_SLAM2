@@ -493,8 +493,23 @@ void LoopClosing::CorrectLoop()
                 Eigen::Matrix<double,3,1> eigP3Dw = Converter::toVector3d(P3Dw);
                 Eigen::Matrix<double,3,1> eigCorrectedP3Dw = g2oCorrectedSwi.map(g2oSiw.map(eigP3Dw));
 
+                //OctreeMap delete node first
                 cv::Mat cvCorrectedP3Dw = Converter::toCvMat(eigCorrectedP3Dw);
+                cv::Mat x3Dw = pMPi->GetWorldPos();
+                float xw = x3Dw.at<float>(0);
+                float yw = x3Dw.at<float>(1);
+                float zw = x3Dw.at<float>(2);
+                mpMap->tree.DeletePoint(xw, yw, zw, pMPi);
+
                 pMPi->SetWorldPos(cvCorrectedP3Dw);
+
+                //OctreeMap update node second
+                x3Dw = pMPi->GetWorldPos();
+                xw = x3Dw.at<float>(0);
+                yw = x3Dw.at<float>(1);
+                zw = x3Dw.at<float>(2);
+                mpMap->tree.updateNode(xw, yw, zw, pMPi);
+
                 pMPi->mnCorrectedByKF = mpCurrentKF->mnId;
                 pMPi->mnCorrectedReference = pKFi->mnId;
                 pMPi->UpdateNormalAndDepth();
@@ -711,8 +726,22 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
 
                 if(pMP->mnBAGlobalForKF==nLoopKF)
                 {
+                    //OctreeMap delete node first
+                    cv::Mat x3Dw = pMP->GetWorldPos();
+                    float xw = x3Dw.at<float>(0);
+                    float yw = x3Dw.at<float>(1);
+                    float zw = x3Dw.at<float>(2);
+                    mpMap->tree.DeletePoint(xw, yw, zw, pMP);
+
                     // If optimized by Global BA, just update
                     pMP->SetWorldPos(pMP->mPosGBA);
+
+                    //OctreeMap update node second
+                    x3Dw = pMP->GetWorldPos();
+                    xw = x3Dw.at<float>(0);
+                    yw = x3Dw.at<float>(1);
+                    zw = x3Dw.at<float>(2);
+                    mpMap->tree.updateNode(xw, yw, zw, pMP);
                 }
                 else
                 {
@@ -732,7 +761,21 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
                     cv::Mat Rwc = Twc.rowRange(0,3).colRange(0,3);
                     cv::Mat twc = Twc.rowRange(0,3).col(3);
 
+                    //OctreeMap delete node first
+                    cv::Mat x3Dw = pMP->GetWorldPos();
+                    float xw = x3Dw.at<float>(0);
+                    float yw = x3Dw.at<float>(1);
+                    float zw = x3Dw.at<float>(2);
+                    mpMap->tree.DeletePoint(xw, yw, zw, pMP);
+
                     pMP->SetWorldPos(Rwc*Xc+twc);
+
+                    //OctreeMap update node second
+                    x3Dw = pMP->GetWorldPos();
+                    xw = x3Dw.at<float>(0);
+                    yw = x3Dw.at<float>(1);
+                    zw = x3Dw.at<float>(2);
+                    mpMap->tree.updateNode(xw, yw, zw, pMP);
                 }
             }            
 

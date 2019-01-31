@@ -195,7 +195,7 @@ namespace ORB_SLAM2 {
                 it = node->mspMapPoints.find(_MapPoint);
                 if(it != node->mspMapPoints.end())
                 {
-                    //node->mspMapPoints.erase(it);
+                    node->mspMapPoints.erase(it);
                 }
 
                 if(node->mspMapPoints.size() == 0)
@@ -228,11 +228,44 @@ namespace ORB_SLAM2 {
 
         void UpdateColor(OctreeNode* node)
         {
-            int color = node->value / 20 * (0xFF00 - 0x00FF) + 0x00FF;
-            int r = (color & 0xFF00) / 0xFF;
-            int g = color & 0x00FF;
-            int b = 0;
-            node->setColor(r,g,b);
+            // int color = node->value / 20 * (0xFF00 - 0x00FF) + 0x00FF;
+            // int r = (color & 0xFF00) / 0xFF;
+            // int g = color & 0x00FF;
+            // int b = 0;
+
+            float H = node->value / 10 * 60 + 240;
+            if (H >= 360)
+                H = 359;
+            float s = 1;
+            float v = 255;
+            int h = (int)(H / 60.f) % 6;
+            float f = H / 60 - h;
+            int p = v * (1 - s);
+            int q = v * (1 - f*s);
+            int t = v * (1 - (1-f)*s);
+            switch(h){
+                case 0:
+                    node->setColor(v,t,p);
+                    break;
+                case 1:
+                    node->setColor(q,v,p);
+                    break;
+                case 2:
+                    node->setColor(p,v,t);
+                    break;
+                case 3:
+                    node->setColor(p,q,v);
+                    break;
+                case 4:
+                    node->setColor(t,p,v);
+                    break;
+                case 5:
+                    node->setColor(v,p,q);
+                    break;
+                default:
+                    node->setColor(0,0,0);
+            }
+            //node->setColor(r,g,b);
         }
 
 

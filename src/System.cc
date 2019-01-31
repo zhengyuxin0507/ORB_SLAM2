@@ -425,24 +425,24 @@ void System::SaveTrajectoryTUM(const string &filename)
 
 void System::SaveOctoMap()
 {
-    vector<MapPoint*> vMapPoints = mpMap->GetAllMapPoints();
-    //octomap::Pointcloud OctoCloud;
-    for(int i = 0; i < vMapPoints.size(); i++)
-    {
+    // vector<MapPoint*> vMapPoints = mpMap->GetAllMapPoints();
+    // //octomap::Pointcloud OctoCloud;
+    // for(int i = 0; i < vMapPoints.size(); i++)
+    // {
 
-        MapPoint* pMP = vMapPoints[i];
-        if(pMP && !pMP->isBad())
-        {
-            cv::Mat x3Dw = pMP->GetWorldPos();
+    //     MapPoint* pMP = vMapPoints[i];
+    //     if(pMP && !pMP->isBad())
+    //     {
+    //         cv::Mat x3Dw = pMP->GetWorldPos();
 
-            const float xw = x3Dw.at<float>(0);
-            const float yw = x3Dw.at<float>(1);
-            const float zw = x3Dw.at<float>(2);
+    //         const float xw = x3Dw.at<float>(0);
+    //         const float yw = x3Dw.at<float>(1);
+    //         const float zw = x3Dw.at<float>(2);
 
-            mpMap->tree.updateNode(xw, yw, zw, pMP);
+    //         mpMap->tree.updateNode(xw, yw, zw, pMP);
 
-        }
-    }
+    //     }
+    // }
     std::string filename ("./simple_color_tree.ot");
     mpMap->tree.write(filename);
     cout << endl << "OctoMap saved!" << endl;
