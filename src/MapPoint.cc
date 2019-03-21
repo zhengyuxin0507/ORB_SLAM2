@@ -43,9 +43,9 @@ MapPoint::MapPoint(const cv::Mat &Pos, KeyFrame *pRefKF, Map* pMap):
     mnId=nNextId++;
 
     //OcTreeKey init
-    mOctreeKey.k[0] = 0;
-    mOctreeKey.k[1] = 0;
-    mOctreeKey.k[2] = 0;
+    // mOctreeKey.k[0] = 0;
+    // mOctreeKey.k[1] = 0;
+    // mOctreeKey.k[2] = 0;
 }
 
 MapPoint::MapPoint(const cv::Mat &Pos, Map* pMap, Frame* pFrame, const int &idxF):
@@ -75,9 +75,9 @@ MapPoint::MapPoint(const cv::Mat &Pos, Map* pMap, Frame* pFrame, const int &idxF
     mnId=nNextId++;
 
     //OcTreeKey init
-    mOctreeKey.k[0] = 0;
-    mOctreeKey.k[1] = 0;
-    mOctreeKey.k[2] = 0;
+    // mOctreeKey.k[0] = 0;
+    // mOctreeKey.k[1] = 0;
+    // mOctreeKey.k[2] = 0;
 }
 
 void MapPoint::SetWorldPos(const cv::Mat &Pos)
